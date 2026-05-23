@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "build": "echo build-ok",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "latest",
+    "prisma": "latest",
+    "express": "latest",
+    "cors": "latest",
+    "helmet": "latest",
+    "bcryptjs": "latest",
+    "jsonwebtoken": "latest",
+    "zod": "latest",
+    "axios": "latest",
+    "express-rate-limit": "latest"
+  },
+  "devDependencies": {}
+}
