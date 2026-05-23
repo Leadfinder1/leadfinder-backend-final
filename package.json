@@ -2,7 +2,7 @@
   "name": "leadfinder-backend-hacker-pro",
   "version": "3.0.0",
   "scripts": {
-    "start": "npx prisma db push && node src/server.js",
+    "start": "npx prisma db push --accept-data-loss && node src/server.js",
     "dev": "node src/server.js",
     "postinstall": "prisma generate"
   },
