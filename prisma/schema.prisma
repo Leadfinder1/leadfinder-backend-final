@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  fullName       String?
+  role           String   @default("USER")
+  plan           String   @default("FREE")
+  scansUsed      Int      @default(0)
+  aiCreditsUsed  Int      @default(0)
+  referralCode   String   @unique
+  referredBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  searches       Search[]
+  crmLeads       CrmLead[]
+  automations    Automation[]
+  auditLogs      AuditLog[]
+}
+
+model Search {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  niche     String
+  city      String
+  status    String   @default("COMPLETED")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leads     Lead[]
+}
+
+model Lead {
+  id               String   @id @default(cuid())
+  searchId         String
+  businessName     String
+  phone            String?
+  address          String?
+  rating           Float?
+  reviews          Int?
+  website          String?
+  mapsUrl          String?
+  placeId          String?
+  niche            String?
+  city             String?
+  email            String?
+  instagram        String?
+  facebook         String?
+  linkedin         String?
+  tiktok           String?
+  youtube          String?
+  whatsapp         String?
+  aiScore          Int      @default(0)
+  opportunityLevel String   @default("cold")
+  scoreReason      String?
+  contactQuality   Int      @default(0)
+  auditScore       Int?
+  auditSummary     String?
+  createdAt        DateTime @default(now())
+  search           Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  crmLead          CrmLead?
+}
+
+model CrmLead {
+  id          String   @id @default(cuid())
+  userId      String
+  leadId      String?  @unique
+  businessName String
+  stage       String   @default("new")
+  notes       String?
+  tags        String   @default("")
+  nextFollowUp DateTime?
+  lastContacted DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  niche       String
+  cities      String
+  frequency   String   @default("daily")
+  active      Boolean  @default(true)
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
