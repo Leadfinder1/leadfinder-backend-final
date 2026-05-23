@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  PRO
+  AGENCY
+}
+
+enum LeadStage {
+  NEW
+  ENRICHED
+  CONTACTED
+  INTERESTED
+  MEETING
+  CLOSED
+  LOST
+}
+
+enum AutomationStatus {
+  ACTIVE
+  PAUSED
+  FAILED
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  fullName        String?
+  role            Role     @default(USER)
+  plan            Plan     @default(FREE)
+  aiCredits       Int      @default(25)
+  scanCredits     Int      @default(10)
+  referralCode    String   @unique
+  referredBy      String?
+  stripeCustomer  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  searches        Search[]
+  leads           Lead[]
+  notes           Note[]
+  automations     Automation[]
+  referrals       Referral[] @relation("Referrer")
+}
+
+model Search {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  niche       String
+  city        String
+  country     String?
+  totalFound  Int      @default(0)
+  status      String   @default("COMPLETED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leads       Lead[]
+}
+
+model Lead {
+  id                 String   @id @default(cuid())
+  userId             String
+  searchId           String?
+  businessName       String
+  niche              String?
+  city               String?
+  address            String?
+  phone              String?
+  website            String?
+  mapsUrl            String?
+  placeId            String?
+  rating             Float?
+  reviews            Int?
+  email              String?
+  instagram          String?
+  facebook           String?
+  linkedin           String?
+  tiktok             String?
+  youtube            String?
+  whatsapp           String?
+  contactQuality     Int      @default(0)
+  aiScore            Int      @default(0)
+  opportunityLevel   String   @default("cold")
+  scoreExplanation   String?
+  stage              LeadStage @default(NEW)
+  tags               String[]  @default([])
+  lastContactedAt    DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  search             Search? @relation(fields: [searchId], references: [id], onDelete: SetNull)
+  notes              Note[]
+  outreachMessages   OutreachMessage[]
+  audit              WebsiteAudit?
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  leadId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead      Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model OutreachMessage {
+  id        String   @id @default(cuid())
+  leadId    String
+  channel   String
+  tone      String
+  language  String
+  subject   String?
+  body      String
+  copied    Boolean  @default(false)
+  sent      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  lead      Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteAudit {
+  id              String   @id @default(cuid())
+  leadId          String   @unique
+  seoScore        Int
+  uxScore         Int
+  performance    Int
+  mobileScore     Int
+  brandingScore   Int
+  summary         String
+  issues          Json
+  opportunities   Json
+  createdAt       DateTime @default(now())
+
+  lead            Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  niche       String
+  cities      String[]
+  schedule    String
+  status      AutomationStatus @default(ACTIVE)
+  lastRunAt    DateTime?
+  nextRunAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Referral {
+  id          String   @id @default(cuid())
+  referrerId  String
+  email       String
+  status      String   @default("INVITED")
+  reward      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  referrer    User @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
